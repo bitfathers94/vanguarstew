@@ -295,6 +295,24 @@ def test_main_catches_os_error_writing_the_out_artifact(monkeypatch, capsys, tmp
     assert str(bad_out) in err
 
 
+def test_main_rejects_non_positive_horizon(monkeypatch, capsys):
+    # Regression (#2077): --horizon flowed unvalidated into solve()/plan_next_actions(), where
+    # a negative n silently truncated the wrong end of the plan instead of being rejected here.
+    monkeypatch.setattr(sys, "argv", _argv("--repo", "/some/repo", "--tasks", "1", "--horizon", "-1"))
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
+    assert "--horizon must be positive" in capsys.readouterr().err
+
+
+def test_main_rejects_zero_horizon(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", _argv("--repo", "/some/repo", "--tasks", "1", "--horizon", "0"))
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
+    assert "--horizon must be positive" in capsys.readouterr().err
+
+
 def test_main_does_not_catch_unrelated_exceptions(monkeypatch):
     # The guard is deliberately narrow to (RuntimeError, RepoSetError); anything else (a real
     # bug elsewhere) must still surface normally rather than being silently swallowed.

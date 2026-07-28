@@ -180,6 +180,8 @@ def main() -> None:
         ap.error("--generalization requires --repo-set")
     if args.generalization and args.held_out:
         ap.error("--generalization already runs both partitions; do not combine it with --held-out")
+    if args.horizon <= 0:
+        ap.error("--horizon must be positive")
 
     common = dict(
         agent_file=args.agent, n_tasks=args.tasks, horizon=args.horizon,

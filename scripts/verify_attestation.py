@@ -69,7 +69,12 @@ def run(argv=None) -> int:
             print(f"verify_attestation: cannot read transcript ({args.transcript}): {exc}",
                   file=sys.stderr)
             raise SystemExit(2) from exc
-        claimed = (evidence.get("inputs") or {}).get("transcript_digest")
+        # `build_evidence` tolerates a non-dict `inputs` (it logs and treats it as empty),
+        # so a bundle can legitimately carry one; read it the same way here rather than
+        # raising AttributeError from `.get` on a list — the traceback this branch exists
+        # to avoid for a bad --transcript path.
+        bound_inputs = evidence.get("inputs")
+        claimed = (bound_inputs if isinstance(bound_inputs, dict) else {}).get("transcript_digest")
         report["checks"]["transcript_digest"] = recorded == claimed
         report["ok"] = all(report["checks"].values())
         if recorded != claimed:

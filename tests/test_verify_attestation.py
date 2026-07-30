@@ -87,3 +87,24 @@ def test_valid_transcript_still_runs_and_reports(tmp_path, capsys):
     assert code == 0
     out = json.loads(capsys.readouterr().out)
     assert "transcript_digest" in out["checks"]
+
+
+def test_non_dict_inputs_reports_instead_of_raising(tmp_path, capsys):
+    # build_evidence treats a non-dict `inputs` as empty rather than failing, so an evidence
+    # bundle can carry one. The transcript branch must read it the same way: report the digest
+    # check as False, not raise AttributeError from `.get` on a list.
+    art, ev = _valid_artifact_and_evidence(tmp_path)
+    with open(ev, encoding="utf-8") as handle:
+        payload = json.load(handle)
+    payload["inputs"] = ["not", "a", "dict"]
+    with open(ev, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle)
+    tpath = tmp_path / "transcript.json"
+    TranscriptStore([{"key": "k", "response": "r"}]).save(str(tpath))
+
+    code = verify_attestation.run(
+        ["--artifact", art, "--evidence", ev, "--transcript", str(tpath)])
+
+    assert code == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["checks"]["transcript_digest"] is False

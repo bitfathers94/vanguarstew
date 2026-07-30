@@ -304,7 +304,7 @@ def verify_benchmark_seal(receipt, *, plan: PolarisBenchmarkSealPlan) -> dict:
     )
     try:
         parsed = receipt if isinstance(receipt, PolarisReceipt) else PolarisReceipt.from_response(receipt)
-        stdout_exact = hmac.compare_digest(parsed.stdout, plan.stdout)
+        stdout_exact = hmac.compare_digest(parsed.stdout.encode("utf-8"), plan.stdout.encode("utf-8"))
     except PolarisError:
         stdout_exact = False
     return {

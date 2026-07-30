@@ -356,6 +356,10 @@ def test_receipt_verifier_checks_report_files_workload_and_exact_stdout():
     assert changed["ok"] is False
     assert changed["stdout_exact"] is False
 
+    non_ascii = verify_benchmark_seal(_receipt(plan, stdout='{"band":"caf\u00e9"}'), plan=plan)
+    assert non_ascii["ok"] is False
+    assert non_ascii["stdout_exact"] is False
+
 
 def test_blocked_benchmark_is_a_valid_attestable_execution():
     artifacts = _blocked_artifacts()
